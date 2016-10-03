@@ -63,7 +63,7 @@ public class TestXMLWriter extends CatalogTestSuiteNoDB {
         final VersionedCatalog versionedCatalog = new VersionedCatalog(clock);
         versionedCatalog.add(catalog);
         final String newCatalogStr = XMLWriter.writeXML(versionedCatalog, VersionedCatalog.class);
-        //System.err.println(newCatalogStr);
+        System.err.println(newCatalogStr);
     }
 
 
@@ -117,7 +117,7 @@ public class TestXMLWriter extends CatalogTestSuiteNoDB {
 
         final String newCatalogStr = XMLWriter.writeXML((StandaloneCatalog) mutableCatalog, StandaloneCatalog.class);
         final StandaloneCatalog newCatalog = XMLLoader.getObjectFromStream(new URI("dummy"), new ByteArrayInputStream(newCatalogStr.getBytes(Charset.forName("UTF-8"))), StandaloneCatalog.class);
-        assertEquals(newCatalog.getCurrentPlans().length, catalog.getCurrentPlans().length + 1);
+        assertEquals(newCatalog.getCurrentPlans().size(), catalog.getCurrentPlans().size() + 1);
 
         final Plan plan = newCatalog.findCurrentPlan("dynamic-monthly");
         assertEquals(plan.getName(), "dynamic-monthly");

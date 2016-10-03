@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlIDREF;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.joda.time.DateTime;
 import org.killbill.billing.ErrorCode;
@@ -60,9 +61,9 @@ public class DefaultPlan extends ValidatingConfig<StandaloneCatalog> implements 
     @XmlElement(required = false)
     private Date effectiveDateForExistingSubscriptions;
 
-    @XmlElement(required = true)
+    @XmlElement(type=DefaultProduct.class, required = true)
     @XmlIDREF
-    private DefaultProduct product;
+    private Product product;
 
     @XmlElementWrapper(name = "initialPhases", required = false)
     @XmlElement(name = "phase", required = false)
@@ -218,7 +219,7 @@ public class DefaultPlan extends ValidatingConfig<StandaloneCatalog> implements 
         return this;
     }
 
-    public DefaultPlan setProduct(final DefaultProduct product) {
+    public DefaultPlan setProduct(final Product product) {
         this.product = product;
         return this;
     }

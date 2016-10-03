@@ -50,6 +50,34 @@ import static org.testng.Assert.fail;
 
 public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
 
+    @Test(groups = "fast", enabled=false)
+    public void testForIssue621() throws Exception {
+        final CatalogUpdater catalogUpdater = new CatalogUpdater("dummy", BillingMode.IN_ADVANCE, clock.getUTCNow(), null);
+        int MAX_PLANS = 100000;
+        for (int i = 1; i <= MAX_PLANS; i++) {
+            final SimplePlanDescriptor desc = new DefaultSimplePlanDescriptor("foo-monthly-" + i, "Foo", ProductCategory.BASE, Currency.EUR, BigDecimal.TEN, BillingPeriod.MONTHLY, 0, TimeUnit.UNLIMITED, ImmutableList.<String>of());
+            catalogUpdater.addSimplePlanDescriptor(desc);
+
+            if (i % 1000 == 0) {
+                System.err.println("8888Iteration i = " +i);
+            }
+        }
+        final StandaloneCatalog catalog = catalogUpdater.getCatalog();
+
+        final long timeFirstPlan = findPlanWithTiming(catalog, "foo-monthly-1");
+        final long timeLastPlan = findPlanWithTiming(catalog, "foo-monthly-" + MAX_PLANS);
+
+        System.err.println("Time: firstPlan (nanoSec) = " + timeFirstPlan + ", timeLastPlan (nanoSec) = " + timeLastPlan);
+    }
+
+    private long findPlanWithTiming(final StandaloneCatalog catalog, final String planName) throws CatalogApiException {
+        final long ini = System.nanoTime();
+        final Plan plan = catalog.findCurrentPlan(planName);
+        assertEquals(plan.getName(), planName);
+        final long fini = System.nanoTime();
+        return (fini - ini);
+    }
+
     @Test(groups = "fast")
     public void testEmptyDefaultCatalog() throws Exception {
 
@@ -58,7 +86,7 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         final CatalogUpdater catalogUpdater = new CatalogUpdater("dummy", BillingMode.IN_ADVANCE, now, null);
         final String catalogXML = catalogUpdater.getCatalogXML();
         final StandaloneCatalog catalog = XMLLoader.getObjectFromStream(new URI("dummy"), new ByteArrayInputStream(catalogXML.getBytes(Charset.forName("UTF-8"))), StandaloneCatalog.class);
-        assertEquals(catalog.getCurrentPlans().length, 0);
+        assertEquals(catalog.getCurrentPlans().size(), 0);
     }
 
     @Test(groups = "fast")
@@ -73,13 +101,13 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
 
         final StandaloneCatalog catalog = catalogUpdater.getCatalog();
 
-        assertEquals(catalog.getCurrentProducts().length, 1);
+        assertEquals(catalog.getCurrentProducts().size(), 1);
 
-        final Product product = catalog.getCurrentProducts()[0];
+        final Product product = catalog.getCurrentProducts().iterator().next();
         assertEquals(product.getName(), "Foo");
         assertEquals(product.getCategory(), ProductCategory.BASE);
 
-        assertEquals(catalog.getCurrentPlans().length, 1);
+        assertEquals(catalog.getCurrentPlans().size(), 1);
 
         final Plan plan = catalog.findCurrentPlan("foo-monthly");
         assertEquals(plan.getName(), "foo-monthly");
@@ -97,10 +125,9 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         assertEquals(catalog.getPriceLists().getAllPriceLists().size(), 1);
         final PriceList priceList = catalog.getPriceLists().getAllPriceLists().get(0);
         assertEquals(priceList.getName(), new PriceListDefault().getName());
-        assertEquals(priceList.getPlans().length, 1);
-        assertEquals(priceList.getPlans()[0].getName(), "foo-monthly");
+        assertEquals(priceList.getPlans().size(), 1);
+        assertEquals(priceList.getPlans().iterator().next().getName(), "foo-monthly");
     }
-
 
     @Test(groups = "fast")
     public void testAddTrialPlanOnFirstCatalog() throws CatalogApiException {
@@ -114,13 +141,13 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
 
         final StandaloneCatalog catalog = catalogUpdater.getCatalog();
 
-        assertEquals(catalog.getCurrentProducts().length, 1);
+        assertEquals(catalog.getCurrentProducts().size(), 1);
 
-        final Product product = catalog.getCurrentProducts()[0];
+        final Product product = catalog.getCurrentProducts().iterator().next();
         assertEquals(product.getName(), "Foo");
         assertEquals(product.getCategory(), ProductCategory.BASE);
 
-        assertEquals(catalog.getCurrentPlans().length, 1);
+        assertEquals(catalog.getCurrentPlans().size(), 1);
 
         final Plan plan = catalog.findCurrentPlan("foo-monthly");
         assertEquals(plan.getName(), "foo-monthly");
@@ -144,11 +171,9 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         assertEquals(catalog.getPriceLists().getAllPriceLists().size(), 1);
         final PriceList priceList = catalog.getPriceLists().getAllPriceLists().get(0);
         assertEquals(priceList.getName(), new PriceListDefault().getName());
-        assertEquals(priceList.getPlans().length, 1);
-        assertEquals(priceList.getPlans()[0].getName(), "foo-monthly");
+        assertEquals(priceList.getPlans().size(), 1);
+        assertEquals(priceList.getPlans().iterator().next().getName(), "foo-monthly");
     }
-
-
 
     @Test(groups = "fast")
     public void testAddPlanOnExistingCatalog() throws Exception {
@@ -156,7 +181,7 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         final StandaloneCatalog originalCatalog = XMLLoader.getObjectFromString(Resources.getResource("SpyCarBasic.xml").toExternalForm(), StandaloneCatalog.class);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().size(), 1);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getName(), new PriceListDefault().getName());
-        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().length, 3);
+        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().size(), 3);
 
         final CatalogUpdater catalogUpdater = new CatalogUpdater(originalCatalog);
 
@@ -181,17 +206,15 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         assertEquals(catalog.getPriceLists().getAllPriceLists().size(), 1);
         final PriceList priceList = catalog.getPriceLists().getAllPriceLists().get(0);
         assertEquals(priceList.getName(), new PriceListDefault().getName());
-        assertEquals(priceList.getPlans().length, 4);
+        assertEquals(priceList.getPlans().size(), 4);
     }
-
-
 
     @Test(groups = "fast")
     public void testAddExistingPlanWithNewCurrency() throws Exception {
         final StandaloneCatalog originalCatalog = XMLLoader.getObjectFromString(Resources.getResource("SpyCarBasic.xml").toExternalForm(), StandaloneCatalog.class);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().size(), 1);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getName(), new PriceListDefault().getName());
-        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().length, 3);
+        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().size(), 3);
 
         final CatalogUpdater catalogUpdater = new CatalogUpdater(originalCatalog);
 
@@ -222,14 +245,13 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         final StandaloneCatalog originalCatalog = enhanceOriginalCatalogForInvalidTestCases("SpyCarBasic.xml");
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().size(), 1);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getName(), new PriceListDefault().getName());
-        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().length, 5);
+        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().size(), 5);
 
         CatalogUpdater catalogUpdater = new CatalogUpdater(originalCatalog);
 
         // Existing Plan has a 30 days trial => try with no TRIAL
         SimplePlanDescriptor desc = new DefaultSimplePlanDescriptor("standard-monthly", "Standard", ProductCategory.BASE, Currency.EUR, BigDecimal.TEN, BillingPeriod.MONTHLY, 0, TimeUnit.DAYS, ImmutableList.<String>of());
         addBadSimplePlanDescriptor(catalogUpdater, desc);
-
 
         // Existing Plan has a 30 days trial => try different trial length
         desc = new DefaultSimplePlanDescriptor("standard-monthly", "Standard", ProductCategory.BASE, Currency.EUR, BigDecimal.TEN, BillingPeriod.MONTHLY, 14, TimeUnit.DAYS, ImmutableList.<String>of());
@@ -256,14 +278,13 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         addBadSimplePlanDescriptor(catalogUpdater, desc);
     }
 
-
     @Test(groups = "fast")
     public void testVerifyXML() throws Exception {
 
         final StandaloneCatalog originalCatalog = XMLLoader.getObjectFromString(Resources.getResource("SpyCarBasic.xml").toExternalForm(), StandaloneCatalog.class);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().size(), 1);
         assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getName(), new PriceListDefault().getName());
-        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().length, 3);
+        assertEquals(originalCatalog.getPriceLists().getAllPriceLists().get(0).getPlans().size(), 3);
 
         final CatalogUpdater catalogUpdater = new CatalogUpdater(originalCatalog);
 
@@ -527,7 +548,6 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         System.err.println(catalogUpdater.getCatalogXML());
     }
 
-
     private StandaloneCatalog enhanceOriginalCatalogForInvalidTestCases(final String catalogName) throws Exception {
 
         final StandaloneCatalog catalog = XMLLoader.getObjectFromString(Resources.getResource(catalogName).toExternalForm(), StandaloneCatalog.class);
@@ -560,7 +580,6 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         mutableCatalog.addPlan(newPlan1);
         newPlan1.initialize((StandaloneCatalog) mutableCatalog, new URI("dummy"));
 
-
         final DefaultProduct newProduct2 = new DefaultProduct();
         newProduct2.setName("SuperDynamic");
         newProduct2.setCatagory(ProductCategory.BASE);
@@ -573,7 +592,6 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         fixedterm2.setDuration(new DefaultDuration().setUnit(TimeUnit.MONTHS).setNumber(3));
         fixedterm2.setRecurring(new DefaultRecurring().setBillingPeriod(BillingPeriod.MONTHLY).setRecurringPrice(new DefaultInternationalPrice().setPrices(new DefaultPrice[]{new DefaultPrice().setCurrency(Currency.USD).setValue(BigDecimal.TEN)})));
 
-
         final DefaultPlan newPlan2 = new DefaultPlan();
         newPlan2.setName("superdynamic-fixedterm");
         newPlan2.setPriceListName(DefaultPriceListSet.DEFAULT_PRICELIST_NAME);
@@ -582,11 +600,9 @@ public class TestCatalogUpdater extends CatalogTestSuiteNoDB {
         mutableCatalog.addPlan(newPlan2);
         newPlan2.initialize((StandaloneCatalog) mutableCatalog, new URI("dummy"));
 
-
         final String newCatalogStr = XMLWriter.writeXML((StandaloneCatalog) mutableCatalog, StandaloneCatalog.class);
         return XMLLoader.getObjectFromStream(new URI("dummy"), new ByteArrayInputStream(newCatalogStr.getBytes(Charset.forName("UTF-8"))), StandaloneCatalog.class);
     }
-
 
     private void addBadSimplePlanDescriptor(final CatalogUpdater catalogUpdater, final SimplePlanDescriptor desc) {
         try {

@@ -20,6 +20,7 @@ package org.killbill.billing.catalog;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 import org.joda.time.DateTime;
 import org.killbill.billing.ErrorCode;
@@ -29,9 +30,11 @@ import org.killbill.billing.catalog.api.BillingMode;
 import org.killbill.billing.catalog.api.CatalogApiException;
 import org.killbill.billing.catalog.api.Currency;
 import org.killbill.billing.catalog.api.PhaseType;
+import org.killbill.billing.catalog.api.Plan;
 import org.killbill.billing.catalog.api.PlanAlignmentChange;
 import org.killbill.billing.catalog.api.PlanAlignmentCreate;
 import org.killbill.billing.catalog.api.PriceListSet;
+import org.killbill.billing.catalog.api.Product;
 import org.killbill.billing.catalog.api.ProductCategory;
 import org.killbill.billing.catalog.api.SimplePlanDescriptor;
 import org.killbill.billing.catalog.api.TimeUnit;
@@ -68,8 +71,8 @@ public class CatalogUpdater {
                 .setCatalogName(catalogName)
                 .setEffectiveDate(effectiveDate.toDate())
                 .setRecurringBillingMode(billingMode)
-                .setProducts(new DefaultProduct[0])
-                .setPlans(new DefaultPlan[0])
+                .setProducts(Collections.<Product>emptyList())
+                .setPlans(Collections.<Plan>emptyList())
                 .setPriceLists(new DefaultPriceListSet(defaultPriceList, new DefaultPriceList[0]))
                 .setPlanRules(getSaneDefaultPlanRules(defaultPriceList));
         if (currencies != null && currencies.length > 0) {
@@ -100,12 +103,12 @@ public class CatalogUpdater {
             throw new CatalogApiException(ErrorCode.CAT_INVALID_SIMPLE_PLAN_DESCRIPTOR, desc);
         }
 
-        DefaultPlan plan = getExistingPlan(desc.getPlanId());
+        DefaultPlan plan = (DefaultPlan) getExistingPlan(desc.getPlanId());
         if (plan == null && desc.getProductName() == null) {
             throw new CatalogApiException(ErrorCode.CAT_INVALID_SIMPLE_PLAN_DESCRIPTOR, desc);
         }
 
-        DefaultProduct product = plan != null ? (DefaultProduct) plan.getProduct() : getExistingProduct(desc.getProductName());
+        DefaultProduct product = plan != null ? (DefaultProduct) plan.getProduct() : (DefaultProduct) getExistingProduct(desc.getProductName());
         if (product == null) {
             product = new DefaultProduct();
             product.setName(desc.getProductName());
@@ -171,9 +174,9 @@ public class CatalogUpdater {
 
         if (desc.getProductCategory() == ProductCategory.ADD_ON) {
             for (final String bp : desc.getAvailableBaseProducts()) {
-                final DefaultProduct targetBasePlan = getExistingProduct(bp);
+                final DefaultProduct targetBasePlan = (DefaultProduct) getExistingProduct(bp);
                 boolean found = false;
-                for (DefaultProduct cur : targetBasePlan.getAvailable()) {
+                for (Product cur : targetBasePlan.getAvailable()) {
                     if (cur.getName().equals(product.getName())) {
                         found = true;
                         break;
@@ -278,8 +281,8 @@ public class CatalogUpdater {
         }
     }
 
-    private DefaultProduct getExistingProduct(final String productName) {
-        for (final DefaultProduct input : catalog.getCurrentProducts()) {
+    private Product getExistingProduct(final String productName) {
+        for (final Product input : catalog.getCurrentProducts()) {
             if (input.getName().equals(productName)) {
                 return input;
             }
@@ -287,8 +290,8 @@ public class CatalogUpdater {
         return null;
     }
 
-    private DefaultPlan getExistingPlan(final String planName) {
-        for (final DefaultPlan input : catalog.getCurrentPlans()) {
+    private Plan getExistingPlan(final String planName) {
+        for (final Plan input : catalog.getCurrentPlans()) {
             if (input.getName().equals(planName)) {
                 return input;
             }

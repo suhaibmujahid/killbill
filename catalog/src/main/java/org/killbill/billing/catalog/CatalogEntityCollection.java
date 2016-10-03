@@ -18,7 +18,6 @@
 package org.killbill.billing.catalog;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -37,11 +36,11 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
         this.data = new HashMap<String, T>();
     }
 
-    public CatalogEntityCollection(final T[] entities) {
+    public CatalogEntityCollection(final Collection entities) {
         this.keys = new TreeSet<String>(Ordering.<String>natural());
         this.data = new HashMap<String, T>();
-        for (final T cur : entities) {
-            addEntry(cur);
+        for (final Object cur : entities) {
+            addEntry((T) cur);
         }
     }
 
@@ -52,7 +51,7 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
         return data.get(entryName);
     }
 
-    public Collection<T> getEntries() {
+    public Collection getEntries() {
         return data.values();
     }
 
@@ -73,7 +72,9 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
 
     @Override
     public Iterator iterator() {
+
         // Build an iterator that will return ordered using natural ordering with regard to CatalogEntity#name
+
         final Iterator<String> keyIterator = keys.iterator();
         final Iterator it = new Iterator() {
 
@@ -83,11 +84,13 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
             public boolean hasNext() {
                 return keyIterator.hasNext();
             }
+
             @Override
             public Object next() {
                 prevKey = keyIterator.next();
                 return data.get(prevKey);
             }
+
             @Override
             public void remove() {
                 if (prevKey != null) {
@@ -96,9 +99,9 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
                 }
             }
         };
+
         return it;
     }
-
 
     @Override
     public boolean add(final T t) {
@@ -123,6 +126,7 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
 
     @Override
     public void clear() {
+        keys.clear();
         data.clear();
     }
 
@@ -163,7 +167,6 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
         return data.values().toArray(new Object[data.size()]);
     }
 
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -175,13 +178,18 @@ public class CatalogEntityCollection<T extends CatalogEntity> implements Collect
 
         final CatalogEntityCollection<?> that = (CatalogEntityCollection<?>) o;
 
+        if (keys != null ? !keys.equals(that.keys) : that.keys != null) {
+            return false;
+        }
         return data != null ? data.equals(that.data) : that.data == null;
 
     }
 
     @Override
     public int hashCode() {
-        return data != null ? data.hashCode() : 0;
+        int result = keys != null ? keys.hashCode() : 0;
+        result = 31 * result + (data != null ? data.hashCode() : 0);
+        return result;
     }
 
     private void addEntry(final T entry) {

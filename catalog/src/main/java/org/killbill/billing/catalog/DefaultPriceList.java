@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlIDREF;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.killbill.billing.catalog.api.BillingPeriod;
 import org.killbill.billing.catalog.api.Plan;
@@ -44,20 +45,27 @@ public class DefaultPriceList extends ValidatingConfig<StandaloneCatalog> implem
 
     @XmlElementWrapper(name = "plans", required = false)
     @XmlIDREF
-    @XmlElement(name = "plan", required = false)
+    //@XmlElement(name = "plan", required = false)
+    @XmlElement(type=DefaultPlan.class, name = "plan", required = false)
+    //@XmlJavaTypeAdapter(DefaultPlan.Adapter.class)
     private CatalogEntityCollection<DefaultPlan> plans;
 
     public DefaultPriceList() {
+        this.plans = new CatalogEntityCollection();
     }
 
-    public DefaultPriceList(final DefaultPlan[] plans, final String name) {
+    public DefaultPriceList(final Collection<Plan> plans, final String name) {
         this.plans = new CatalogEntityCollection(plans);
         this.name = name;
     }
 
     @Override
     public Collection<Plan> getPlans() {
-        return (Collection<Plan>) plans.getEntries();
+        return plans.getEntries();
+    }
+
+    public CatalogEntityCollection<DefaultPlan> getCollectionPlans() {
+        return plans;
     }
 
     /* (non-Javadoc)
@@ -72,18 +80,19 @@ public class DefaultPriceList extends ValidatingConfig<StandaloneCatalog> implem
       * @see org.killbill.billing.catalog.IPriceList#findPlan(org.killbill.billing.catalog.api.IProduct, org.killbill.billing.catalog.api.BillingPeriod)
       */
     @Override
-    public DefaultPlan[] findPlans(final Product product, final BillingPeriod period) {
-        final List<DefaultPlan> result = new ArrayList<DefaultPlan>(plans.size());
-        for (final DefaultPlan cur : getPlans()) {
+    public Collection<Plan> findPlans(final Product product, final BillingPeriod period) {
+        final List<Plan> result = new ArrayList<Plan>(plans.size());
+        for (final Object curObj : getPlans()) {
+            final Plan cur = (Plan) curObj;
             if (cur.getProduct().equals(product) &&
                 (cur.getRecurringBillingPeriod() != null && cur.getRecurringBillingPeriod().equals(period))) {
                 result.add(cur);
             }
         }
-        return result.toArray(new DefaultPlan[result.size()]);
+        return result;
     }
 
-    public DefaultPlan findPlan(final String planName) {
+    public Plan findPlan(final String planName) {
         return plans.findByName(planName);
     }
 
@@ -97,7 +106,7 @@ public class DefaultPriceList extends ValidatingConfig<StandaloneCatalog> implem
         return this;
     }
 
-    public DefaultPriceList setPlans(final DefaultPlan[] plans) {
+    public DefaultPriceList setPlans(final Collection<Plan> plans) {
         this.plans = new CatalogEntityCollection(plans);
         return this;
     }

@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.joda.time.DateTime;
@@ -46,6 +47,8 @@ import org.killbill.billing.catalog.rules.DefaultCaseChangePlanPolicy;
 import org.killbill.billing.catalog.rules.DefaultCaseCreateAlignment;
 import org.killbill.billing.catalog.rules.DefaultPlanRules;
 
+import com.google.common.collect.ImmutableList;
+
 public class MockCatalog extends StandaloneCatalog implements Catalog {
 
     private static final String[] PRODUCT_NAMES = new String[]{"TestProduct1", "TestProduct2", "TestProduct3"};
@@ -57,7 +60,7 @@ public class MockCatalog extends StandaloneCatalog implements Catalog {
     public MockCatalog() {
         setEffectiveDate(new Date());
         setProducts(MockProduct.createAll());
-        setPlans((DefaultPlan[]) MockPlan.createAll());
+        setPlans(MockPlan.createAll());
         populateRules();
         populatePriceLists();
     }
@@ -76,14 +79,18 @@ public class MockCatalog extends StandaloneCatalog implements Catalog {
     }
 
     public void populatePriceLists() {
-        final DefaultPlan[] plans = getCurrentPlans();
+        final Collection<Plan> plans = getCurrentPlans();
 
-        final DefaultPriceList[] priceList = new DefaultPriceList[plans.length - 1];
-        for (int i = 1; i < plans.length; i++) {
-            priceList[i - 1] = new DefaultPriceList(new DefaultPlan[]{plans[i]}, plans[i].getName() + "-pl");
+        final DefaultPriceList[] priceList = new DefaultPriceList[plans.size() - 1];
+        final Iterator<Plan> it = plans.iterator();
+
+        final Plan firstPlan = it.next();
+        for (int i = 1; i < plans.size(); i++) {
+            final Plan plan = it.next();
+            priceList[i - 1] = new DefaultPriceList(ImmutableList.<Plan>of(plan), plan.getName() + "-pl");
         }
 
-        final DefaultPriceListSet set = new DefaultPriceListSet(new PriceListDefault(new DefaultPlan[]{plans[0]}), priceList);
+        final DefaultPriceListSet set = new DefaultPriceListSet(new PriceListDefault(ImmutableList.<Plan>of(firstPlan)), priceList);
         setPriceLists(set);
     }
 
@@ -102,12 +109,12 @@ public class MockCatalog extends StandaloneCatalog implements Catalog {
     }
 
     @Override
-    public Product[] getProducts(final DateTime requestedDate) throws CatalogApiException {
+    public Collection<Product> getProducts(final DateTime requestedDate) throws CatalogApiException {
         return getCurrentProducts();
     }
 
     @Override
-    public Plan[] getPlans(final DateTime requestedDate) throws CatalogApiException {
+    public Collection<Plan> getPlans(final DateTime requestedDate) throws CatalogApiException {
         return getCurrentPlans();
     }
 
@@ -237,19 +244,17 @@ public class MockCatalog extends StandaloneCatalog implements Catalog {
         return canCreatePlan;
     }
 
-    @Override
-    public DefaultProduct[] getCurrentProducts() {
-        final Collection<DefaultProduct> unordered = super.getAllProducts();
-        final  DefaultProduct[] result = new DefaultProduct[unordered.size()];
+    public Product[] getOrderedProducts() {
+        final Collection<Product> unordered = getCurrentProducts();
+        final Product[] result = new DefaultProduct[unordered.size()];
         convertCurrentEntries(unordered, result);
         return result;
     }
 
 
-    @Override
-    public DefaultPlan[] getCurrentPlans() {
-        final Collection<DefaultPlan> unordered = super.getAllPlans();
-        final DefaultPlan[] result = new DefaultPlan[unordered.size()];
+    public Plan[] getOrderedPlans() {
+        final Collection<Plan> unordered = getCurrentPlans();
+        final Plan[] result = new DefaultPlan[unordered.size()];
         convertCurrentEntries(unordered, result);
         return result;
     }
@@ -264,7 +269,7 @@ public class MockCatalog extends StandaloneCatalog implements Catalog {
                 return o1.getName().compareTo(o2.getName());
             }
         });
-        list.toArray(result);
+        list.toArray(result);;
     }
 
     public void setCanCreatePlan(final boolean canCreatePlan) {

@@ -18,6 +18,7 @@ package org.killbill.billing.catalog;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -26,8 +27,11 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlIDREF;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.killbill.billing.catalog.api.Limit;
+import org.killbill.billing.catalog.api.Plan;
 import org.killbill.billing.catalog.api.Product;
 import org.killbill.billing.catalog.api.ProductCategory;
 import org.killbill.xmlloader.ValidatingConfig;
@@ -35,7 +39,8 @@ import org.killbill.xmlloader.ValidationErrors;
 
 @XmlAccessorType(XmlAccessType.NONE)
 public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implements Product {
-    private static final DefaultProduct[] EMPTY_PRODUCT_LIST = new DefaultProduct[0];
+
+    private static final CatalogEntityCollection<DefaultProduct> EMPTY_PRODUCT_COLLECTION = new CatalogEntityCollection<DefaultProduct>();
 
     @XmlAttribute(required = true)
     @XmlID
@@ -46,13 +51,17 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
 
     @XmlElementWrapper(name = "included", required = false)
     @XmlIDREF
-    @XmlElement(name = "addonProduct", required = false)
-    private DefaultProduct[] included;
+    //@XmlElement(name = "addonProduct", required = false)
+    @XmlElement(type=DefaultProduct.class, name = "addonProduct", required = false)
+    //@XmlJavaTypeAdapter(DefaultProduct.Adapter.class)
+    private CatalogEntityCollection<DefaultProduct> included;
 
     @XmlElementWrapper(name = "available", required = false)
     @XmlIDREF
-    @XmlElement(name = "addonProduct", required = false)
-    private DefaultProduct[] available;
+    //@XmlElement(name = "addonProduct", required = false)
+    @XmlElement(type=DefaultProduct.class, name = "addonProduct", required = false)
+    //@XmlJavaTypeAdapter(DefaultProduct.Adapter.class)
+    private CatalogEntityCollection<DefaultProduct> available;
 
     @XmlElementWrapper(name = "limits", required = false)
     @XmlElement(name = "limit", required = false)
@@ -71,19 +80,25 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
         return category;
     }
 
+
+
     @Override
-    public DefaultProduct[] getIncluded() {
-        return included;
+    public Collection<Product> getIncluded() {
+        return (Collection<Product>) included.getEntries();
     }
 
     @Override
-    public DefaultProduct[] getAvailable() {
+    public Collection<Product> getAvailable() {
+        return (Collection<Product>) available.getEntries();
+    }
+
+    public CatalogEntityCollection<DefaultProduct> getCollectionAvailable() {
         return available;
     }
 
     public DefaultProduct() {
-        included = EMPTY_PRODUCT_LIST;
-        available = EMPTY_PRODUCT_LIST;
+        included = EMPTY_PRODUCT_COLLECTION;
+        available = EMPTY_PRODUCT_COLLECTION;
         limits = new DefaultLimit[0];
     }
 
@@ -98,7 +113,7 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
     }
 
     public boolean isIncluded(final DefaultProduct addon) {
-        for (final DefaultProduct p : included) {
+        for (final Product p : included) {
             if (addon == p) {
                 return true;
             }
@@ -107,7 +122,7 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
     }
 
     public boolean isAvailable(final DefaultProduct addon) {
-        for (final DefaultProduct p : included) {
+        for (final Product p : included) {
             if (addon == p) {
                 return true;
             }
@@ -168,13 +183,13 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
         return this;
     }
 
-    public DefaultProduct setIncluded(final DefaultProduct[] included) {
-        this.included = included;
+    public DefaultProduct setIncluded(final Collection<Product> included) {
+        this.included = new CatalogEntityCollection<DefaultProduct>(included);
         return this;
     }
 
-    public DefaultProduct setAvailable(final DefaultProduct[] available) {
-        this.available = available;
+    public DefaultProduct setAvailable(final Collection<Product> available) {
+        this.available = new CatalogEntityCollection<DefaultProduct>(available);
         return this;
     }
 
@@ -185,9 +200,14 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
 
     @Override
     public String toString() {
-        return "DefaultProduct [name=" + name + ", category=" + category + ", included="
-                + Arrays.toString(included) + ", available=" + Arrays.toString(available) + ", catalogName="
-                + catalogName + "]";
+        return "DefaultProduct{" +
+               "name='" + name + '\'' +
+               ", category=" + category +
+               ", included=" + included +
+               ", available=" + available +
+               ", limits=" + Arrays.toString(limits) +
+               ", catalogName='" + catalogName + '\'' +
+               '}';
     }
 
     @Override
@@ -195,41 +215,40 @@ public class DefaultProduct extends ValidatingConfig<StandaloneCatalog> implemen
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof DefaultProduct)) {
             return false;
         }
 
-        final DefaultProduct that = (DefaultProduct) o;
+        final DefaultProduct product = (DefaultProduct) o;
 
-        if (!Arrays.equals(available, that.available)) {
+        if (name != null ? !name.equals(product.name) : product.name != null) {
             return false;
         }
-        if (catalogName != null ? !catalogName.equals(that.catalogName) : that.catalogName != null) {
+        if (category != product.category) {
             return false;
         }
-        if (category != that.category) {
+        if (included != null ? !included.equals(product.included) : product.included != null) {
             return false;
         }
-        if (!Arrays.equals(included, that.included)) {
+        if (available != null ? !available.equals(product.available) : product.available != null) {
             return false;
         }
-        if (!Arrays.equals(limits, that.limits)) {
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(limits, product.limits)) {
             return false;
         }
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
+        return catalogName != null ? catalogName.equals(product.catalogName) : product.catalogName == null;
 
-        return true;
     }
 
     @Override
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (category != null ? category.hashCode() : 0);
-        result = 31 * result + (included != null ? Arrays.hashCode(included) : 0);
-        result = 31 * result + (available != null ? Arrays.hashCode(available) : 0);
-        result = 31 * result + (limits != null ? Arrays.hashCode(limits) : 0);
+        result = 31 * result + (included != null ? included.hashCode() : 0);
+        result = 31 * result + (available != null ? available.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(limits);
+        result = 31 * result + (catalogName != null ? catalogName.hashCode() : 0);
         return result;
     }
 }

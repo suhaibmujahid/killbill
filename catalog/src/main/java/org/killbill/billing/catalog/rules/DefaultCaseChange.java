@@ -44,9 +44,9 @@ public abstract class DefaultCaseChange<T> extends ValidatingConfig<StandaloneCa
     @XmlElement(required = false)
     protected PhaseType phaseType;
 
-    @XmlElement(required = false)
+    @XmlElement(type=DefaultProduct.class, required = false)
     @XmlIDREF
-    private DefaultProduct fromProduct;
+    private Product fromProduct;
 
     @XmlElement(required = false)
     private ProductCategory fromProductCategory;
@@ -58,9 +58,9 @@ public abstract class DefaultCaseChange<T> extends ValidatingConfig<StandaloneCa
     @XmlIDREF
     private DefaultPriceList fromPriceList;
 
-    @XmlElement(required = false)
+    @XmlElement(type=DefaultProduct.class, required = false)
     @XmlIDREF
-    private DefaultProduct toProduct;
+    private Product toProduct;
 
     @XmlElement(required = false)
     private ProductCategory toProductCategory;
@@ -154,7 +154,7 @@ public abstract class DefaultCaseChange<T> extends ValidatingConfig<StandaloneCa
         return this;
     }
 
-    public DefaultCaseChange<T> setFromProduct(final DefaultProduct fromProduct) {
+    public DefaultCaseChange<T> setFromProduct(final Product fromProduct) {
         this.fromProduct = fromProduct;
         return this;
     }
@@ -174,7 +174,7 @@ public abstract class DefaultCaseChange<T> extends ValidatingConfig<StandaloneCa
         return this;
     }
 
-    public DefaultCaseChange<T> setToProduct(final DefaultProduct toProduct) {
+    public DefaultCaseChange<T> setToProduct(final Product toProduct) {
         this.toProduct = toProduct;
         return this;
     }

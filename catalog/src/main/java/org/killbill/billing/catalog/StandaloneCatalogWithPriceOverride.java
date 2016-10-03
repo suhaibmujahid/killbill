@@ -70,8 +70,8 @@ public class StandaloneCatalogWithPriceOverride extends StandaloneCatalog implem
 
 
     @Override
-    public DefaultPlan createOrFindCurrentPlan(final PlanSpecifier spec, final PlanPhasePriceOverridesWithCallContext overrides) throws CatalogApiException {
-        final DefaultPlan defaultPlan = super.createOrFindCurrentPlan(spec, null);
+    public Plan createOrFindCurrentPlan(final PlanSpecifier spec, final PlanPhasePriceOverridesWithCallContext overrides) throws CatalogApiException {
+        final Plan defaultPlan = super.createOrFindCurrentPlan(spec, null);
         if (overrides == null ||
             overrides.getOverrides() == null ||
             overrides.getOverrides().isEmpty()) {
@@ -83,7 +83,7 @@ public class StandaloneCatalogWithPriceOverride extends StandaloneCatalog implem
     }
 
     @Override
-    public DefaultPlan findCurrentPlan(final String planName) throws CatalogApiException {
+    public Plan findCurrentPlan(final String planName) throws CatalogApiException {
         final Matcher m = DefaultPriceOverride.CUSTOM_PLAN_NAME_PATTERN.matcher(planName);
         if (m.matches()) {
             final InternalTenantContext internalTenantContext = createInternalTenantContext();

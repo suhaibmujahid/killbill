@@ -16,9 +16,12 @@
 
 package org.killbill.billing.catalog;
 
+import java.util.Collection;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.killbill.billing.catalog.api.Plan;
 import org.killbill.billing.catalog.api.PriceListSet;
 import org.killbill.xmlloader.ValidationError;
 import org.killbill.xmlloader.ValidationErrors;
@@ -29,7 +32,7 @@ public class PriceListDefault extends DefaultPriceList {
     public PriceListDefault() {
     }
 
-    public PriceListDefault(final DefaultPlan[] defaultPlans) {
+    public PriceListDefault(final Collection<Plan> defaultPlans) {
         super(defaultPlans, PriceListSet.DEFAULT_PRICELIST_NAME);
     }
 

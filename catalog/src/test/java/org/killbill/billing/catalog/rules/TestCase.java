@@ -19,6 +19,7 @@ package org.killbill.billing.catalog.rules;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlIDREF;
 
+import org.killbill.billing.catalog.api.Product;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -55,9 +56,9 @@ public class TestCase extends CatalogTestSuiteNoDB {
             return policy;
         }
 
-        @XmlElement(required = false, name = "product")
+        @XmlElement(type=DefaultProduct.class, required = false, name = "product")
         @XmlIDREF
-        protected DefaultProduct product;
+        protected Product product;
         @XmlElement(required = false, name = "productCategory")
         protected ProductCategory productCategory;
 
@@ -68,7 +69,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
         @XmlIDREF
         protected DefaultPriceList priceList;
 
-        public DefaultProduct getProduct() {
+        public Product getProduct() {
             return product;
         }
 
@@ -84,7 +85,8 @@ public class TestCase extends CatalogTestSuiteNoDB {
             return priceList;
         }
 
-        protected DefaultCaseResult setProduct(final DefaultProduct product) {
+        @Override
+        protected DefaultCaseResult setProduct(final Product product) {
             this.product = product;
             return this;
         }
@@ -109,7 +111,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testBasic() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr = new DefaultCaseResult(
@@ -120,7 +122,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
                 Result.FOO);
 
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
-        assertionNull(cr, cat.getCurrentProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
+        assertionNull(cr, cat.getOrderedProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertionNull(cr, product.getName(), ProductCategory.BASE, BillingPeriod.ANNUAL, priceList.getName(), cat);
         assertionException(cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, "dipsy", cat);
     }
@@ -129,7 +131,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testWildCardProduct() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr = new DefaultCaseResult(
@@ -141,7 +143,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
                 Result.FOO);
 
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
-        assertion(Result.FOO, cr, cat.getCurrentProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
+        assertion(Result.FOO, cr, cat.getOrderedProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertionNull(cr, product.getName(), ProductCategory.BASE, BillingPeriod.ANNUAL, priceList.getName(), cat);
         assertionException(cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, "dipsy", cat);
     }
@@ -150,7 +152,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testWildCardProductCategory() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr = new DefaultCaseResult(
@@ -162,7 +164,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
                 Result.FOO);
 
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
-        assertionNull(cr, cat.getCurrentProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
+        assertionNull(cr, cat.getOrderedProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertion(Result.FOO, cr, product.getName(), ProductCategory.ADD_ON, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertionNull(cr, product.getName(), ProductCategory.BASE, BillingPeriod.ANNUAL, priceList.getName(), cat);
         assertionException(cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, "dipsy", cat);
@@ -172,7 +174,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testWildCardBillingPeriod() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr = new DefaultCaseResult(
@@ -184,7 +186,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
                 Result.FOO);
 
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
-        assertionNull(cr, cat.getCurrentProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
+        assertionNull(cr, cat.getOrderedProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.ANNUAL, priceList.getName(), cat);
         assertionException(cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, "dipsy", cat);
     }
@@ -193,7 +195,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testWildCardPriceList() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr = new DefaultCaseResult(
@@ -205,7 +207,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
                 Result.FOO);
 
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
-        assertionNull(cr, cat.getCurrentProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
+        assertionNull(cr, cat.getOrderedProducts()[1].getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, priceList.getName(), cat);
         assertionNull(cr, product.getName(), ProductCategory.BASE, BillingPeriod.ANNUAL, priceList.getName(), cat);
         assertion(Result.FOO, cr, product.getName(), ProductCategory.BASE, BillingPeriod.MONTHLY, "dipsy", cat);
     }
@@ -214,7 +216,7 @@ public class TestCase extends CatalogTestSuiteNoDB {
     public void testCaseOrder() throws CatalogApiException {
         final MockCatalog cat = new MockCatalog();
 
-        final DefaultProduct product = cat.getCurrentProducts()[0];
+        final DefaultProduct product = (DefaultProduct) cat.getOrderedProducts()[0];
         final DefaultPriceList priceList = cat.findCurrentPriceList(PriceListSet.DEFAULT_PRICELIST_NAME);
 
         final DefaultCaseResult cr0 = new DefaultCaseResult(

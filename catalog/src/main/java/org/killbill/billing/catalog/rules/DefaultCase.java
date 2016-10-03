@@ -36,7 +36,7 @@ public abstract class DefaultCase<T> extends ValidatingConfig<StandaloneCatalog>
 
     protected abstract T getResult();
 
-    public abstract DefaultProduct getProduct();
+    public abstract Product getProduct();
 
     public abstract ProductCategory getProductCategory();
 
@@ -92,7 +92,7 @@ public abstract class DefaultCase<T> extends ValidatingConfig<StandaloneCatalog>
         return errors;
     }
 
-    protected abstract DefaultCase<T> setProduct(DefaultProduct product);
+    protected abstract DefaultCase<T> setProduct(Product product);
 
     protected abstract DefaultCase<T> setProductCategory(ProductCategory productCategory);
 
